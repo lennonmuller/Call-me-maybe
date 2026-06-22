@@ -1,23 +1,26 @@
 """
 Generation pipeline using Contextual Scaffolding for ultra-fast generation.
+Validated with Pydantic to strictly follow PDF rules.
 """
 
 from typing import Any
-from llm_sdk import Small_LLM_Model  # type: ignore
+from pydantic import BaseModel, ConfigDict
 from src.constrained_dec import VocabularyMapper, FunctionTrie
 from src.schema_models import FunctionDef
 
 
-class FunctionCaller:
-    def __init__(self,
-                 model: Small_LLM_Model,
-                 mapper: VocabularyMapper,
-                 trie: FunctionTrie,
-                 functions: list[FunctionDef]) -> None:
-        self.model = model
-        self.mapper = mapper
-        self.trie = trie
-        self.functions = functions
+class FunctionCaller(BaseModel):
+    """
+    Orchestrates the function selection and argument generation pipeline.
+    Inherits from BaseModel to comply with PDF rule: 'All classes must use pydantic'.
+    """
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    # Campos validados na instanciação
+    model: Any
+    mapper: VocabularyMapper
+    trie: FunctionTrie
+    functions: list[FunctionDef]
 
     def select_function(self, prompt: str) -> str | None:
         funcs_info = "\n".join([f"- {f.name}: {f.description}" for f in self.functions])
@@ -117,8 +120,14 @@ class FunctionCaller:
             param_def = selected_function.parameters[key]
             json_context += f'    "{key}": '
 
-            full_prompt = f"Task: Extract the exact value for '{key}' from the user request.\n" \
-                          f"User: {prompt}\nJSON:\n{json_context}"
+            full_prompt = (
+                f"Function: {selected_function.name}\n"
+                f"Description: {selected_function.description}\n\n"
+                f"User request: {prompt}\n\n"
+                f"Instruction: Extract the exact parameter values from the user request to form a JSON object."
+                "DO NOT execute the function.\n"
+                f"JSON:\n{json_context}"
+            )
 
             if param_def.type == "string":
                 json_context += '"'

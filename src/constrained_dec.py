@@ -1,11 +1,11 @@
 """
 Constrained Decoding Core.
-Implements the Bonus Tokenizer and the Function Trie.
+Implements the Bonus Tokenizer and the Function Trie using Pydantic.
 """
 
 import json
-from typing import TypedDict
-from llm_sdk import Small_LLM_Model  # type: ignore
+from typing import TypedDict, Any
+from pydantic import BaseModel, ConfigDict, Field
 from src.schema_models import FunctionDef
 
 
@@ -15,27 +15,35 @@ class TrieNode(TypedDict):
     fn_name: str | None
 
 
-class VocabularyMapper:
+class VocabularyMapper(BaseModel):
     """
-    Handles vocabulary mapping and implements a Custom Tokenizer (Bonus Part)
-    in pure Python without using model.encode() or model.decode().
+    Handles vocabulary mapping and implements a Custom Tokenizer.
+    Uses Pydantic for validation to strictly comply with PDF rules.
     """
-    def __init__(self, model: Small_LLM_Model) -> None:
-        self.model = model
-        vocab_path = model.get_path_to_vocab_file()
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    model: Any
+
+    vocab: dict[str, int] = Field(default_factory=dict)
+    vocab_inverted: dict[int, str] = Field(default_factory=dict)
+    id_to_clean_token: dict[int, str] = Field(default_factory=dict)
+    number_tokens: list[int] = Field(default_factory=list)
+    boolean_tokens: list[int] = Field(default_factory=list)
+    _sorted_tokens: list[tuple[str, int]] = []
+
+    def __init__(self, **data: Any):
+        super().__init__(**data)
+
+        vocab_path = self.model.get_path_to_vocab_file()
         with open(vocab_path, "r", encoding="utf-8") as f:
             self.vocab = json.load(f)
 
         self.vocab_inverted = {v: k for k, v in self.vocab.items()}
-        self.id_to_clean_token: dict[int, str] = {}
 
         for tid, raw_str in self.vocab_inverted.items():
             self.id_to_clean_token[tid] = raw_str.replace('Ġ', ' ').replace('Ċ', '\n').replace('ċ', '\n')
 
         self._sorted_tokens = sorted(self.vocab.items(), key=lambda x: len(x[0]), reverse=True)
-
-        self.number_tokens: list[int] = []
-        self.boolean_tokens: list[int] = []
 
         for tid, t_str in self.id_to_clean_token.items():
             if all(c in "0123456789.-+eE \t" for c in t_str) or any(c in ",\n}" for c in t_str):
@@ -51,7 +59,6 @@ class VocabularyMapper:
         return self.id_to_clean_token.get(token_id, "")
 
     def encode(self, text: str) -> list[int]:
-        """BONUS: Pure Python Tokenizer using Greedy Longest Match."""
         ids: list[int] = []
         encoded_text = text.replace(' ', 'Ġ').replace('\n', 'Ċ')
 
@@ -68,13 +75,14 @@ class VocabularyMapper:
         return ids
 
     def decode(self, ids: list[int]) -> str:
-        """BONUS: Pure Python Decoder."""
         return "".join([self.token_to_str(tid) for tid in ids])
 
 
-class FunctionTrie:
-    def __init__(self) -> None:
-        self.root: TrieNode = {"children": {}, "is_end": False, "fn_name": None}
+class FunctionTrie(BaseModel):
+    """
+    Prefix tree using Pydantic validation.
+    """
+    root: TrieNode = {"children": {}, "is_end": False, "fn_name": None}
 
     def insert(self, tokens: list[int], fn_name: str) -> None:
         current = self.root
@@ -112,7 +120,6 @@ class FunctionTrie:
 
 
 def build_trie(functions: list[FunctionDef], mapper: VocabularyMapper) -> FunctionTrie:
-    """Builds the FSM Trie using the custom tokenizer."""
     trie = FunctionTrie()
     for function in functions:
         tokens = mapper.encode(function.name)

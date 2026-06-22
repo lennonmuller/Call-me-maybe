@@ -46,9 +46,9 @@ def main() -> None:
         prompts_data = load_prompts(args.input)
 
         model = Small_LLM_Model()
-        mapper = VocabularyMapper(model)  # mapper recebe model
+        mapper = VocabularyMapper(model=model)  # mapper recebe model
         trie = build_trie(functions, mapper)  # trie recebe mapper
-        caller = FunctionCaller(model, mapper, trie, functions)
+        caller = FunctionCaller(model=model, mapper=mapper, trie=trie, functions=functions)
     except Exception as e:
         print(f"Initialization Error: {e}", file=sys.stderr)
         sys.exit(1)
@@ -68,7 +68,7 @@ def main() -> None:
             print(f"Error: {e}", file=sys.stderr)
 
     elapsed = time.time() - start_time
-    print(f"Done in {elapsed:.2f} seconds.")
+    print(f"\nDone in {elapsed:.2f} seconds.")
 
     with open(args.output, 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=4)
