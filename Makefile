@@ -3,7 +3,7 @@ SGOINFRE := $(shell [ -d /sgoinfre/$(USER) ] && echo /sgoinfre/$(USER) || echo $
 UV_ENV := UV_CACHE_DIR=$(SGOINFRE)/.cache/uv UV_PROJECT_ENVIRONMENT=$(SGOINFRE)/.venv_cmm HF_HOME=$(SGOINFRE)/.cache/huggingface
 
 
-.PHONY: install run debug clean lint lint-strict test
+.PHONY: install run debug clean lint lint-strict
 
 install:
 	curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -32,5 +32,3 @@ lint-strict:
 	$(UV_ENV) $(UV) run flake8 .
 	$(UV_ENV) $(UV) run mypy . --strict
 
-test:
-	$(UV_ENV) $(UV) run pytest -q
