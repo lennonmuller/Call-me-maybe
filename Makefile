@@ -29,8 +29,8 @@ lint:
 	$(UV_ENV) $(UV) run mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 
 lint-strict:
-	$(UV) run flake8 .
-	$(UV) run mypy . --strict
+	$(UV_ENV) $(UV) run flake8 .
+	$(UV_ENV) $(UV) run mypy . --strict
 
 test:
 	$(UV_ENV) $(UV) run pytest -q
