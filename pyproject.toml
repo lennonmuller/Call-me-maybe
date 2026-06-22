@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "llm-sdk",
     "numpy>=2.4.4",
     "pydantic>=2.13.4",
 ]
@@ -20,3 +21,11 @@ exclude = [
     "^\\.venv/",
     "^llm_sdk/"
 ]
+
+[tool.uv.workspace]
+members = [
+    "llm_sdk",
+]
+
+[tool.uv.sources]
+llm-sdk = { workspace = true }
