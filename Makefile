@@ -21,6 +21,7 @@ debug:
 clean:
 	rm -rf __pycache__ .mypy_cache src/__pycache__
 	find . -type d -name "__pycache__" -exec rm -r {} +
+	find . -type f -name "*.pyc" -delete
 	rm -rf data/output/*
 
 lint:
@@ -32,4 +33,4 @@ lint-strict:
 	$(UV) run mypy . --strict
 
 test:
-	$(UV_ENV) $(UV) run pytest
+	$(UV_ENV) $(UV) run pytest -q
