@@ -3,7 +3,7 @@ SGOINFRE := $(shell [ -d /sgoinfre/$(USER) ] && echo /sgoinfre/$(USER) || echo $
 UV_ENV := UV_CACHE_DIR=$(SGOINFRE)/.cache/uv UV_PROJECT_ENVIRONMENT=$(SGOINFRE)/.venv_cmm HF_HOME=$(SGOINFRE)/.cache/huggingface
 
 
-.PHONY: install run debug clean lint lint-strict
+.PHONY: install run debug clean lint lint-strict test
 
 install:
 	curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -13,10 +13,10 @@ install:
 	$(UV_ENV) $(UV) sync
 
 run:
-	$(UV_ENV) run python -m src
+	$(UV_ENV) $(UV) run python -m src
 
 debug:
-	$(UV_ENV) run python -m pdb -m src
+	$(UV_ENV) $(UV) run python -m pdb -m src
 
 clean:
 	rm -rf __pycache__ .mypy_cache src/__pycache__
@@ -24,9 +24,12 @@ clean:
 	rm -rf data/output/*
 
 lint:
-	uv run flake8 .
-	uv run mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+	$(UV) run flake8 .
+	$(UV) run mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 
 lint-strict:
-	uv run flake8 .
-	uv run mypy . --strict
+	$(UV) run flake8 .
+	$(UV) run mypy . --strict
+
+test:
+	$(UV_ENV) $(UV) run pytest
