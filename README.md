@@ -56,16 +56,15 @@ This means we are successfully transforming text into numbers without touching t
 ### How to test WITHOUT the Bonus (Mandatory Only)
 
 You can easily disable the custom tokenizer and revert to the SDK's default encoder.
-Simply change the `encode` and `decode` calls in `src/generator`.py from `self.mapper` to `self.model`:
+Simply change the `encode` calls in `src/generator`.py from `self.mapper` to `self.model`:
 
 ```bash
 # Change this (Bonus):
-input_ids = self.mapper.encode(full_prompt)
-val_str = self.mapper.decode(string_generated)
+input_ids = self.mapper.encode(system_prompt)
 
 # To this (Mandatory Only):
-input_ids = self.model.encode(full_prompt).tolist()[0]
-val_str = self.model.decode(string_generated)
+input_ids = self.model.encode(system_prompt).tolist()[0]
+
 ```
 
 
@@ -143,3 +142,8 @@ In strict adherence to the project's AI Instructions, AI was **not** used to gen
 3. **Task: Resolving LLM Hallucinations (Phase: Prompt Engineering)**
    - *Prompt:* "I am using a small 0.6B parameters model. Even though my FSM restricts it to output valid JSON, the model is suffering from 'attention amnesia' and outputting the key name as the value (e.g., `{'name': 'name'}`). How should I structure my system prompt to force it to extract the actual value from the user request?"
    - *Result:* Led to the discovery of the "Contextual Scaffolding" technique, where I programmatically build the JSON prefix in Python and instruct the model specifically to *extract* rather than *execute*.
+
+
+## Important
+
+The `Makefile` is optimized for the `42 School infrastructure` and automatically redirects caches and virtual environments to `/sgoinfre/$USER`. If you are not using a 42 campus machine, you may need to modify these paths according to your environment.
